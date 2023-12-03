@@ -13,9 +13,10 @@ struct Args {
     practice: bool,
 }
 
-fn get_day(day: usize) -> Result<impl Day, ()> {
+fn get_day(day: usize) -> Result<&'static dyn Day, ()> {
     match day {
-        1 => Ok(days::day1::Day1),
+        1 => Ok(&days::day1::Day1),
+        2 => Ok(&days::day2::Day2),
         _ => Err(()),
     }
 }

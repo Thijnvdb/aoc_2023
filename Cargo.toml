@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 clap = { version="4.4.10", features=["derive"] }
+nom = "7.1.3"
 regex = "1.10.2"
 terminal_size = "0.3.0"

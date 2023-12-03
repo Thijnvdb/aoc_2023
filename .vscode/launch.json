@@ -14,9 +14,9 @@
                 "problemMatcher": "$rustrc"
             },
             "args": [
-                "1",
-                "2"
-                //,"--practice"
+                "2",
+                "1"
+                ,"--practice"
             ],
             "cwd": "${workspaceFolder}",
             "sourceLanguages": ["rust"],
