@@ -17,6 +17,7 @@ fn get_day(day: usize) -> Result<&'static dyn Day, ()> {
     match day {
         1 => Ok(&days::day1::Day1),
         2 => Ok(&days::day2::Day2),
+        3 => Ok(&days::day3::Day3),
         _ => Err(()),
     }
 }

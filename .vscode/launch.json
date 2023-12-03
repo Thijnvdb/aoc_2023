@@ -14,7 +14,7 @@
                 "problemMatcher": "$rustrc"
             },
             "args": [
-                "2",
+                "3",
                 "1"
                 ,"--practice"
             ],
