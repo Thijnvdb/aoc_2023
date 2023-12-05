@@ -23,7 +23,7 @@ impl Day for Day3 {
     fn execute(self: &Self, part: usize, file_path: &str) -> Result<(), String> {
         match part {
             1 => Part1::run(self::Part1::parse(file_path)),
-            // 2 => Part2::run(self::Part2::parse(file_path)),
+            2 => Part2::run(self::Part2::parse(file_path)),
             _ => return Err(format!("part '{}' not found for day 2", part)),
         };
         Ok(())
@@ -37,6 +37,7 @@ struct Board {
     squares: Vec<Vec<Square>>,
 }
 
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
 struct Square {
     id: Option<Uuid>,
     text: String,
@@ -72,7 +73,7 @@ fn parse_line(input: &str) -> IResult<&str, Vec<Square>> {
                     value: 0,
                 },
                 _ => Square {
-                    id: None,
+                    id: Some(Uuid::new_v4()),
                     text: input.to_string(),
                     is_symbol: true,
                     value: 0,
@@ -116,7 +117,7 @@ fn parse_symbol(input: &str) -> IResult<&str, char> {
     Ok((input, symbol))
 }
 
-fn get_surrounding_values(x: usize, y: usize, board: &mut Board) -> HashSet<Uuid> {
+fn get_surrounding_squares(x: usize, y: usize, board: &mut Board) -> HashSet<Square> {
     let x_range = match x {
         0 => vec![x, x + 1],
         _ => vec![x - 1, x, x + 1],
@@ -128,6 +129,7 @@ fn get_surrounding_values(x: usize, y: usize, board: &mut Board) -> HashSet<Uuid
     };
 
     let mut accounted = std::collections::hash_set::HashSet::<Uuid>::new();
+    let mut squares = std::collections::hash_set::HashSet::<Square>::new();
     for dy in y_range.to_owned() {
         for dx in x_range.to_owned() {
             if dx >= board.squares.first().unwrap().len() || dy >= board.squares.len() {
@@ -135,12 +137,15 @@ fn get_surrounding_values(x: usize, y: usize, board: &mut Board) -> HashSet<Uuid
             }
 
             if let Some(id) = board.squares[dy][dx].id {
-                accounted.insert(id);
+                if !accounted.contains(&id) && !board.squares[dy][dx].is_symbol {
+                    accounted.insert(id);
+                    squares.insert(board.squares[dy][dx].to_owned());
+                }
             }
         }
     }
 
-    accounted
+    squares
 }
 
 impl Part<Board> for Part1 {
@@ -156,9 +161,9 @@ impl Part<Board> for Part1 {
         for y in 0..board.squares.len() {
             for x in 0..board.squares.first().unwrap().len() {
                 if board.squares[y][x].is_symbol {
-                    let surrounding = get_surrounding_values(x, y, board);
+                    let surrounding = get_surrounding_squares(x, y, board);
                     for x in surrounding {
-                        part_number_ids.insert(x);
+                        part_number_ids.insert(x.id.unwrap());
                     }
                 }
             }
@@ -168,6 +173,10 @@ impl Part<Board> for Part1 {
         let mut checked = HashSet::<Uuid>::new();
         for y in 0..board.squares.len() {
             for x in 0..board.squares.first().unwrap().len() {
+                if board.squares[y][x].is_symbol {
+                    continue;
+                }
+
                 if let Some(id) = board.squares[y][x].id {
                     if part_number_ids.contains(&id) {
                         print!("{}", red(board.squares[y][x].text.as_str()));
@@ -180,6 +189,50 @@ impl Part<Board> for Part1 {
                     }
 
                     checked.insert(id);
+                } else {
+                    print!("{}", board.squares[y][x].text.as_str());
+                }
+            }
+            println!();
+        }
+
+        println!("Output: {}", output);
+    }
+}
+
+impl Part<Board> for Part2 {
+    fn parse(file_path: &str) -> Board {
+        let lines = get_lines(file_path);
+        parse_board(lines)
+    }
+
+    fn run(mut input: Board) {
+        let board = input.borrow_mut();
+
+        let mut gears: HashSet<Uuid> = HashSet::new();
+        let mut output = 0;
+        for y in 0..board.squares.len() {
+            for x in 0..board.squares.first().unwrap().len() {
+                if board.squares[y][x].is_symbol {
+                    let surrounding = get_surrounding_squares(x, y, board);
+                    if surrounding.len() == 2 && board.squares[y][x].text == "*" {
+                        gears.insert(board.squares[y][x].id.unwrap());
+                        let arr = surrounding.iter().collect::<Vec<&Square>>();
+                        let gear_ratio = arr.first().unwrap().value * arr.last().unwrap().value;
+                        output += gear_ratio;
+                    }
+                }
+            }
+        }
+
+        for y in 0..board.squares.len() {
+            for x in 0..board.squares.first().unwrap().len() {
+                if let Some(id) = board.squares[y][x].id {
+                    if gears.contains(&id) {
+                        print!("{}", red(board.squares[y][x].text.as_str()));
+                    } else {
+                        print!("{}", board.squares[y][x].text.as_str());
+                    }
                 } else {
                     print!("{}", board.squares[y][x].text.as_str());
                 }
